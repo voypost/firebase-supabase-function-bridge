@@ -97,12 +97,12 @@ const validateRequest = (req, res, tableName, functionType) => {
   }
 }
 
-const createSupabaseFunction = (tableName, functionType, body) => {
+const createSupabaseFunction = (tableName, functionType, region, body) => {
   if (!customApiKey) {
     throw new Error(`Cannot create supabase function without a custom API key!`)
   }
 
-  const firebaseFunction = functions.https.onRequest(async (req, res) => {
+  const firebaseFunction = functions.region(region).https.onRequest(async (req, res) => {
     if (validateRequest(req, res, tableName, functionType)) {
       try {
         const result = await body(req, res)
