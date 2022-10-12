@@ -56,7 +56,7 @@ if (!customApiKey) {
   throw new Error('Custom API key is not set!')
 }
 
-const pathToFirebaseFunctionsFile = path.resolve(process.cwd(), 'index.js')
+const pathToFirebaseFunctionsFile = path.resolve(process.cwd(), 'lib', 'index.js')
 
 let postgresClient
 
