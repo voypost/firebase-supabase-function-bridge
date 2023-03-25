@@ -6,6 +6,7 @@ const path = require('path')
 const admin = require('firebase-admin')
 const args = require('process').argv
 const { FunctionTypes } = require('./')
+const { isPlainObject } = require('is-plain-object')
 
 dotenv.config()
 
@@ -82,7 +83,17 @@ async function runSqlQuery(query, params = []) {
 }
 
 function getFirebaseFunctionsAsSupabaseFunctions() {
-  const functionsByName = require(pathToFirebaseFunctionsFile)
+  const functionsExport = require(pathToFirebaseFunctionsFile)
+  const functionsByName = {}
+  Object.entries(functionsExport).map(([key, groupOrFunction]) => {
+    if (isPlainObject(groupOrFunction)) {
+      Object.entries(groupOrFunction).map(([functionName, functionBody]) => {
+        functionsByName[`${key}-${functionName}`] = functionBody
+      });
+    } else {
+      functionsByName[key] = groupOrFunction
+    }
+  })
 
   const supabaseFunctions = {}
 
@@ -151,10 +162,10 @@ async function createSupabaseFunctions(supabaseFunctions) {
     )
 
     await runSqlQuery(
-      `DROP TRIGGER IF EXISTS ${functionName} ON public.${tableName}`
+      `DROP TRIGGER IF EXISTS "${functionName}" ON public.${tableName}`
     )
 
-    await runSqlQuery(`CREATE TRIGGER ${functionName}
+    await runSqlQuery(`CREATE TRIGGER "${functionName}"
 AFTER ${getSqlEventForEventName(eventName)} ON public.${tableName}
 FOR EACH ROW
 EXECUTE PROCEDURE supabase_functions.http_request('${url}', '${method}', '${JSON.stringify(
